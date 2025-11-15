@@ -55,7 +55,7 @@ header .container {
   background: green;
   min-height: calc(100vh - 80px);
   display: flex;
-  justify-content: center;
+  align-items: center;
   justify-content: center;
 }
 
@@ -63,7 +63,7 @@ header .container {
   background: white;
   padding: 40px;
   border-radius: 10px;
-  width: 100%;
+  max-width: 400px;
   width: 100%;
 }
 .auth-form h2 {
