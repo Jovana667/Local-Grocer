@@ -195,3 +195,19 @@ function displayProducts(productsToShow) {
 }
 
 // Search Handler
+function handleSearch() {
+    const searchTerm = searchInput.value.toLowerCase().trim();
+
+    if (!searchTerm) {
+        displayProducts(allProducts);
+        return;
+    }
+
+    const filteredProducts = allProducts.filter(
+        (product) =>
+            product.name.toLowerCase().includes(searchTerm) ||
+        products.description.toLowerCase().includes(searchTerm)
+    );
+    
+    displayProducts(filteredProducts);
+}
