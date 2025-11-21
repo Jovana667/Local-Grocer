@@ -366,3 +366,16 @@ function completeOrder() {
   }
 
 // add CSS animation
+const style = document.createElement("style");
+style.textContent = `
+@keyframe slideIn {
+from {
+transform: translateX(100%);
+opacity: 0;
+}
+to {
+transform: X(0);
+opacity: 1;
+}
+}`;
+document.head.appendChild(style);

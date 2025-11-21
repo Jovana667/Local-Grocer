@@ -119,6 +119,15 @@ header .container {
 
 /* Shop Section */
 
+main {
+  padding:40px 0;   
+}
+
+.search-section {
+  display: flex;
+  gap: 10px;
+  margin-bottom:30px;
+}
 /* remove in sec */
 
 .hidden {
