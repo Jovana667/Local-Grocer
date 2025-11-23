@@ -214,9 +214,14 @@ function handleSearch() {
 
 // add to cart
 function addToCart(productId) {
+  console.log("addToCart called with productId:", productId);
   const product = products.find((p) => p.id == productId);
+  console.log("Found product:", product);
 
-  if (!product) return;
+  if (!product) {
+    console.log("Product not found!");
+    return;
+  }
 
   const existingItem = cart.find((item) => item.id === productId);
 
@@ -226,6 +231,7 @@ function addToCart(productId) {
     cart.push({ ...product, quantity: 1 });
   }
 
+  console.log("Cart after adding:", cart);
   updateCartCount();
   showNotification("Added to cart!");
 }
@@ -261,18 +267,24 @@ function showNotification(message) {
 
 // open cart modal
 function openCart() {
+  console.log("openCart called, cart length:", cart.length);
+  console.log("cart contents:", cart);
+
   if (cart.length === 0) {
     showNotification("Your cart is empty!");
     return;
   }
 
-  disaplyCartItems();
+  displayCartItems();
+  cartModal.classList.remove("hidden");
   cartModal.classList.add("active");
+  console.log("Cart modal should be visible now");
 }
 
 // close cart modal
 function closeCart() {
   cartModal.classList.remove("active");
+  cartModal.classList.add("hidden");
 }
 
 // display cart items
@@ -283,14 +295,15 @@ function displayCartItems() {
     const cartItem = document.createElement("div");
     cartItem.className = "cart-item";
     cartItem.innerHTML = `
-    <div class=cart-item-info">
-    <div class="cart-item-name>${item.name} (x${item.quantity})</div>
-    <div class="cart-item-price">$${(item.price * item.quantity).toFixed(
-      2
-    )}</div>
-    <button class="remove-btn" onclick="removeFromCart(${
-      item.id
-    })">Remove</button>`;
+    <div class="cart-item-info">
+      <div class="cart-item-name">${item.name} (x${item.quantity})</div>
+      <div class="cart-item-price">$${(item.price * item.quantity).toFixed(
+        2
+      )}</div>
+      <button class="remove-btn" onclick="removeFromCart(${
+        item.id
+      })">Remove</button>
+    </div>`;
 
     cartItems.appendChild(cartItem);
   });
@@ -363,7 +376,7 @@ function completeOrder() {
     document.getElementById("cardInput").value = "";
     checkoutMessage.textContent = "";
   }, 2000);
-  }
+}
 
 // add CSS animation
 const style = document.createElement("style");
