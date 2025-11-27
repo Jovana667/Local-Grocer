@@ -98,17 +98,117 @@ async function loadProductsFromBackend() {
 }
 
 // login handler
-function handleLogin() {
-  console.log("Login button clicked!"); //debug log
+// function handleLogin() {
+//   console.log("Login button clicked!"); //debug log
+
+//   const email = emailInput.value.trim();
+//   const password = passwordInput.value.trim();
+
+//   console.log("Email:", email); //debug log
+//   console.log("Password:", password ? "***" : "(empty)"); //debug log
+
+//   if (!email || !password) {
+//     showAuthMessage("Please enter both email and password", "error");
+//     return;
+//   }
+
+//   if (!email.includes("@")) {
+//     showAuthMessage("Please enter a valid email address", "error");
+//     return;
+//   }
+
+//   // simple auth for demo
+//   currentUser = { email: email };
+//   showAuthMessage("Login successful!", "success");
+
+//   console.log("Login successful, switching to shop view"); //debug log
+
+//   setTimeout(() => {
+//     authSection.classList.add("hidden");
+//     shopSection.classList.remove("hidden");
+//     displayProducts(allProducts);
+//   }, 1000);
+// }
+
+async function handleLogin() {
+  console.log("Login button clicked!");
 
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
 
-  console.log("Email:", email); //debug log
-  console.log("Password:", password ? "***" : "(empty)"); //debug log
-
   if (!email || !password) {
     showAuthMessage("Please enter both email and password", "error");
+    return;
+  }
+  if (!email.includes("@")) {
+    showAuthMessage("Please enter a valid email address", "error");
+    return;
+  }
+  try { 
+    // send login request to backend
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      currentUser = data.user;
+      showAuthMessage(data.message, "success");
+
+      setTimeout(() => {
+        authSection.classList.add("hidden");
+        shopSection.classList.remove("hidden");
+        displayProducts(allProducts);
+      }, 1000);
+    } else {
+      showAuthMessage(data.message, "error");
+    }
+      } catch (error) {
+        console.error('Login error:', error);
+        showAuthMessage("Login failed. Please try again.", "error");
+      }
+    }
+
+    // register handler
+
+
+// function handleRegister() {
+//   console.log("Register button clicked!"); //debug log
+
+//   const email = emailInput.value.trim();
+//   const password = passwordInput.value.trim();
+
+//   console.log("Email:", email); //debug log
+//   console.log("Password:", password ? "***" : "(empty)"); //debug log
+
+//   if (!email || !password) {
+//     showAuthMessage("Please enter both email and password", "error");
+//     return;
+//   }
+
+//   if (!email.includes("@")) {
+//     showAuthMessage("Please enter a valid email address", "error");
+//     return;
+//   }
+
+//   if (password.length < 6) {
+//     showAuthMessage("Password must be at least 6 characters", "error");
+//     return;
+//   }
+
+async function handleRegister() {
+  console.log("Register button clicked!");
+  
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
+
+  if (!email || !password) {
+    showAuthMessage("please enter both email and password", "error");
     return;
   }
 
@@ -116,43 +216,41 @@ function handleLogin() {
     showAuthMessage("Please enter a valid email address", "error");
     return;
   }
-
-  // simple auth for demo
-  currentUser = { email: email };
-  showAuthMessage("Login successful!", "success");
-
-  console.log("Login successful, switching to shop view"); //debug log
-
-  setTimeout(() => {
-    authSection.classList.add("hidden");
-    shopSection.classList.remove("hidden");
-    displayProducts(allProducts);
-  }, 1000);
-}
-
-function handleRegister() {
-  console.log("Register button clicked!"); //debug log
-
-  const email = emailInput.value.trim();
-  const password = passwordInput.value.trim();
-
-  console.log("Email:", email); //debug log
-  console.log("Password:", password ? "***" : "(empty)"); //debug log
-
-  if (!email || !password) {
-    showAuthMessage("Please enter both email and password", "error");
-    return;
-  }
-
-  if (!email.includes("@")) {
-    showAuthMessage("Please enter a valid email address", "error");
-    return;
-  }
-
   if (password.length < 6) {
     showAuthMessage("Password must be at least 6 characters", "error");
-    return;
+  return;
   }
+
+  try {
+    // send rregister request to backend
+    const response = await fetch('/api/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        currentUser = data.user;
+        showAuthMessage(data.message, "success");
+
+        setTimeout(() => {
+          authSection.classList.add("hidden");
+          shopSection.classList.remove("hidden");
+          displayProducts(allProducts);
+        }, 1000);
+      } else {
+        showAuthMessage(data.message, "error");
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      showAuthMessage("Registration failed. Please try again.", "error");
+    }
+  }
+
 
   // simple registration for demo
   currentUser = { email: email };
