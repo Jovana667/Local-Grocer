@@ -181,6 +181,33 @@ app.post("/api/cart", (req, res) => {
   );
 });
 
+// Remove item from cart
+app.delete('/api/cart/:userId/:productId', (req, res) => {
+  const { userId, productId } = req.params;
+  
+  db.run('DELETE FROM cart WHERE user_id = ? AND product_id = ?', 
+    [userId, productId], (err) => {
+      if (err) {
+        console.error('Error removing from cart:', err);
+        return res.json({ success: false, message: 'Failed to remove from cart' });
+      }
+      res.json({ success: true, message: 'Removed from cart' });
+    });
+});
+
+// Clear entire cart
+app.delete('/api/cart/:userId', (req, res) => {
+  const userId = req.params.userId;
+  
+  db.run('DELETE FROM cart WHERE user_id = ?', [userId], (err) => {
+    if (err) {
+      console.error('Error clearing cart:', err);
+      return res.json({ success: false, message: 'Failed to clear cart' });
+    }
+    res.json({ success: true, message: 'Cart cleared' });
+  });
+});
+
 // start server
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);
