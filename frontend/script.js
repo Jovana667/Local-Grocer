@@ -16,6 +16,7 @@ let authSection,
   authMessage;
 let productsGrid, cartBtn, cartCount, cartModal, checkoutModal;
 let cartItems, cartTotal, searchInput, searchBtn, checkoutBtn, completeOrderBtn;
+let ordersSection, ordersList, backToShopBtn, viewOrdersBtn;
 
 // wait for DOM to load
 
@@ -39,10 +40,16 @@ document.addEventListener("DOMContentLoaded", function () {
   searchBtn = document.getElementById("searchBtn");
   checkoutBtn = document.getElementById("checkoutBtn");
   completeOrderBtn = document.getElementById("completeOrderBtn");
+  ordersSection = document.getElementById("ordersSection");
+  ordersList = document.getElementById("ordersList");
+  backToShopBtn = document.getElementById("backToShopBtn");
+  viewOrdersBtn = document.getElementById("viewOrdersBtn");
 
   // event listeners
   loginBtn.addEventListener("click", handleLogin);
   registerBtn.addEventListener("click", handleRegister);
+  backToShopBtn.addEventListener("click", backToShop);
+  viewOrdersBtn.addEventListener("click", viewOrders);
 
   // allow enter key to login
   emailInput.addEventListener("keyup", (e) => {
@@ -74,9 +81,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (e.target === checkoutModal) closeCheckout();
   });
 
-  // load products from backend
-  loadProductsFromBackend();
-});
+
 
 // load products from backend
 async function loadProductsFromBackend() {
@@ -94,6 +99,9 @@ async function loadProductsFromBackend() {
     console.error("Error loading products:", error);
   }
 }
+
+  loadProductsFromBackend();
+});
 
 // login handler
 
@@ -130,6 +138,7 @@ async function handleLogin() {
       setTimeout(() => {
         authSection.classList.add("hidden");
         shopSection.classList.remove("hidden");
+        console.log("Displaying products, allProducts:", allProducts);
         displayProducts(allProducts);
       }, 1000);
     } else {
@@ -585,30 +594,81 @@ async function completeOrder() {
   }
 }
 
-// Load user's cart from database
-async function loadCartFromDatabase() {
+// ========== ORDER HISTORY FUNCTIONS ==========
+
+// View order history
+async function viewOrders() {
   if (!currentUser || !currentUser.id) {
-    console.log("No user logged in");
+    showNotification("Please login first!");
     return;
   }
 
   try {
-    const response = await fetch(`/api/cart/${currentUser.id}`);
-    const data = await response.json();
+    const response = await fetch(`/api/orders/${currentUser.id}`);
+    const orders = await response.json();
 
-    console.log("Cart loaded from database:", data);
+    console.log("Orders loaded:", orders);
 
-    // Store cart with cart database IDs for updating
-    cart = data.map((item) => ({
-      ...item,
-      cartId: item.id, // Store the cart table ID
-      id: item.product_id || item.id, // Use product_id as the main ID
-    }));
+    // Hide shop, show orders
+    shopSection.classList.add("hidden");
+    ordersSection.classList.remove("hidden");
 
-    updateCartCount();
+    displayOrders(orders);
   } catch (error) {
-    console.error("Error loading cart:", error);
+    console.error("Error fetching orders:", error);
+    showNotification("Failed to load orders");
   }
+}
+
+// Display order history
+function displayOrders(orders) {
+  ordersList.innerHTML = "";
+
+  if (orders.length === 0) {
+    ordersList.innerHTML = `
+      <div class="no-orders">
+        <div class="no-orders-icon">📦</div>
+        <p>No orders yet!</p>
+        <p>Start shopping to place your first order.</p>
+      </div>
+    `;
+    return;
+  }
+
+  orders.forEach((order) => {
+    const orderCard = document.createElement("div");
+    orderCard.className = "order-card";
+
+    const orderDate = new Date(order.created_at);
+    const formattedDate = orderDate.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    orderCard.innerHTML = `
+      <h3>Order #${order.id}</h3>
+      <p><strong>Date:</strong> ${formattedDate}</p>
+      <p><strong>Name:</strong> ${order.name}</p>
+      <p><strong>Address:</strong> ${order.address}</p>
+      <p><strong>Total:</strong> <span style="color: #28a745; font-size: 20px; font-weight: bold;">$${order.total.toFixed(
+        2
+      )}</span></p>
+      <p><strong>Status:</strong> <span class="order-status">${
+        order.status
+      }</span></p>
+    `;
+
+    ordersList.appendChild(orderCard);
+  });
+}
+
+// Go back to shop
+function backToShop() {
+  ordersSection.classList.add("hidden");
+  shopSection.classList.remove("hidden");
 }
 
 // add CSS animation
