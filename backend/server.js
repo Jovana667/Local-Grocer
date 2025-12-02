@@ -13,6 +13,15 @@ app.use(express.json());
 // server frontend folder
 app.use(express.static(path.join(__dirname, "../frontend")));
 
+// ========== ADD THIS: CORS headers ==========
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  next();
+});
+
+
 // routes
 // get all products from database
 app.get("/api/products", (req, res) => {
