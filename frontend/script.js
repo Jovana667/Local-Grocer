@@ -213,47 +213,57 @@ function showAuthMessage(message, type) {
 }
 
 // Display products
-function displayProducts(productsToShow) {
+async function displayProducts(productsToShow) {
   // clear old products
   productsGrid.innerHTML = "";
 
-  productsToShow.forEach((product) => {
-    // for each product create...
+  // Show each product
+  for (const product of productsToShow) {
+    // Create product card
     const productCard = document.createElement("div");
     productCard.className = "card product-card";
-    // create a div with Bootstrap card classes
+    
+    // Start with emoji as default
+    let imageHtml = `<div class="product-image text-center">${product.emoji}</div>`;
+    
+    // Try to fetch product image from Unsplash
+    try {
+      const imgResponse = await fetch(`/api/product-image/${product.name}`);
+      const imgData = await imgResponse.json();
+      
+      if (imgData.imageUrl) {
+        // Use real image if available
+        imageHtml = `<img src="${imgData.imageUrl}" alt="${product.name}" class="product-image-photo" />`;
+      }
+    } catch (error) {
+      console.error('Error fetching image:', error);
+      // Keep emoji if image fails
+    }
+    
+    // Build card HTML
     productCard.innerHTML = `
         <div class="card-body">
-          <div class="product-image text-center" style="font-size: 3rem;">${
-            product.emoji
-          }</div>
+          ${imageHtml}
           <h5 class="card-title">${product.name}</h5>
           <p class="card-text">${product.description}</p>
         </div>
         <div class="card-footer">
           <div class="d-flex justify-content-between align-items-center">
-            <span class="product-price fw-bold text-success">$${product.price.toFixed(
-              2
-            )}</span>
-            <button class="btn btn-primary btn-sm" onclick="addToCart(${
-              product.id
-            })">
+            <span class="product-price fw-bold text-success">$${product.price.toFixed(2)}</span>
+            <button class="btn btn-primary btn-sm" onclick="addToCart(${product.id})">
               Add to Cart
             </button>
           </div>
         </div>
-        `;
+    `;
 
-    // fill it with HTML including product details and an add to cart button
     productsGrid.appendChild(productCard);
-  });
-  // add to page
-
-  if (productsToShow.length === 0) {
-    productsGrid.innerHTML =
-      '<p style="grid-column:1/-1; text-align: center; padding:40px;">No products found.</p>';
   }
-  // show this message if there are no products
+
+  // Show message if no products
+  if (productsToShow.length === 0) {
+    productsGrid.innerHTML = '<p style="grid-column:1/-1; text-align: center; padding:40px;">No products found.</p>';
+  }
 }
 
 // Search Handler

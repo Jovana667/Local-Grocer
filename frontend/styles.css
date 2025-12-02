@@ -199,6 +199,7 @@ main {
   border-radius: 5px;
   font-size: 14px;
 }
+
 /* products grid */
 .products-grid {
   display: grid;
@@ -292,6 +293,7 @@ main {
 .add-to-cart-btn:hover {
   background-color: #218838;
 }
+
 /* modal */
 .modal {
   display: none;
