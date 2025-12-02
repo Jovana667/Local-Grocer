@@ -4,6 +4,7 @@ const path = require("path");
 const db = require("./database");
 const app = express();
 const bcrypt = require("bcrypt");
+const fetch = require('node-fetch');
 const PORT = 3000;
 
 // middleware to parse JSON
@@ -348,6 +349,35 @@ app.get("/api/products/sorted", (req, res) => {
     }
   );
 });
+
+// Get product image from Unsplash
+app.get('/api/product-image/:productName', async (req, res) => {
+  const productName = req.params.productName;
+  const accessKey = 'XdU2APzTQgIpSbddfHZxAz7_34cDjEXfvF_hiN0d6NE'; // REPLACE WITH YOUR KEY!
+  
+  try {
+    console.log(`Fetching image for: ${productName}`);
+    
+    const response = await fetch(
+      `https://api.unsplash.com/search/photos?query=${productName}&per_page=1&client_id=${accessKey}`
+    );
+    
+    const data = await response.json();
+    
+    if (data.results && data.results.length > 0) {
+      const imageUrl = data.results[0].urls.regular; // Get high-quality image
+      console.log(`Image found: ${imageUrl}`);
+      res.json({ imageUrl: imageUrl });
+    } else {
+      console.log(`No image found for: ${productName}`);
+      res.json({ imageUrl: null });
+    }
+  } catch (error) {
+    console.error('Unsplash API error:', error);
+    res.status(500).json({ error: 'Failed to fetch image' });
+  }
+});
+
 
 // start server
 app.listen(PORT, () => {
