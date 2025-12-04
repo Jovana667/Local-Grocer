@@ -431,7 +431,7 @@ function displayCartItems() {
 
 // update cart total
 function updateCartTotal() {
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity);
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   cartTotal.textContent = total.toFixed(2);
 }
 
@@ -520,6 +520,35 @@ async function decrementQuantity(productId) {
     }
   } catch (error) {
     console.error("Error decrementing quantity:", error);
+  }
+}
+
+// Remove item from cart
+async function removeFromCart(productId) {
+  if (!currentUser || !currentUser.id) {
+    return;
+  }
+
+  const item = cart.find((item) => item.id === productId);
+  if (!item) return;
+
+  try {
+    // Remove from database if item has cartId
+    if (item.cartId) {
+      await fetch(`/api/cart/${item.cartId}`, {
+        method: "DELETE",
+      });
+    }
+
+    // Remove from local cart array
+    cart = cart.filter((item) => item.id !== productId);
+
+    // Update display
+    displayCartItems();
+    updateCartCount();
+    showNotification("Item removed from cart");
+  } catch (error) {
+    console.error("Error removing from cart:", error);
   }
 }
 
