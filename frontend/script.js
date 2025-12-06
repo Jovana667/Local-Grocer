@@ -53,6 +53,7 @@ document.addEventListener("DOMContentLoaded", function () {
   registerBtn.addEventListener("click", handleRegister);
   backToShopBtn.addEventListener("click", backToShop);
   viewOrdersBtn.addEventListener("click", viewOrders);
+  checkoutBtn.addEventListener("click", openCheckout);
 
   // allow enter key to login
   emailInput.addEventListener("keyup", (e) => {
@@ -300,7 +301,7 @@ async function displayProducts(productsToShow) {
 
 // Search Handler
 function handleSearch(e) {
-   if (e) e.preventDefault(); 
+  if (e) e.preventDefault();
   const searchTerm = searchInput.value.toLowerCase().trim();
   e.preventDefault();
   if (!searchTerm) {
@@ -407,6 +408,7 @@ function showNotification(message) {
 function openCart() {
   console.log("openCart called, cart length:", cart.length);
   console.log("cart contents:", cart);
+  console.log("checkoutBtn element:", checkoutBtn); // ← Add this!
 
   if (cart.length === 0) {
     showNotification("Your cart is empty!");
@@ -585,6 +587,7 @@ async function removeFromCart(productId) {
 // open chekout
 function openCheckout() {
   closeCart();
+  checkoutModal.classList.remove("hidden");
   checkoutModal.classList.add("active");
 }
 
