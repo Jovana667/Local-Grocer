@@ -1,9 +1,11 @@
+require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const db = require("./database");
 const bcrypt = require("bcrypt");
 const fetch = require("node-fetch");
-const cors = require("cors"); // ← ADD THIS
+const cors = require("cors");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const app = express();
 const PORT = 3000;
 
@@ -379,6 +381,44 @@ app.get("/api/product-image/:productName", async (req, res) => {
   } catch (error) {
     console.error("Unsplash API error:", error);
     res.status(500).json({ error: "Failed to fetch image" });
+  }
+});
+
+// Create Stripe checkout session
+app.post("/api/create-checkout-session", async (req, res) => {
+  try {
+    const { cart } = req.body;
+
+    if (!cart || cart.length === 0) {
+      return res.status(400).json({ error: "Cart is empty" });
+    }
+
+    // Convert cart items to Stripe line items
+    const lineItems = cart.map((item) => ({
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: item.name,
+          description: item.description,
+        },
+        unit_amount: Math.round(item.price * 100), // Stripe uses cents
+      },
+      quantity: item.quantity,
+    }));
+
+    // Create Stripe checkout session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: lineItems,
+      mode: "payment",
+      success_url: `http://localhost:${PORT}/success.html`,
+      cancel_url: `http://localhost:${PORT}/cancel.html`,
+    });
+
+    res.json({ url: session.url });
+  } catch (error) {
+    console.error("Error creating checkout session:", error);
+    res.status(500).json({ error: "Failed to create checkout session" });
   }
 });
 

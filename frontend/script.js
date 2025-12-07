@@ -585,10 +585,39 @@ async function removeFromCart(productId) {
 }
 
 // open chekout
-function openCheckout() {
+async function openCheckout() {
   closeCart();
-  checkoutModal.classList.remove("hidden");
-  checkoutModal.classList.add("active");
+
+  if (cart.length === 0) {
+    showNotification("Your cart is empty");
+    return;
+  }
+
+  try {
+    // Call backend to create Stripe checkout session
+    const response = await fetch(
+      "http://localhost:3000/api/create-checkout-session",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ cart }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.ok && data.url) {
+      // Redirect to Stripe checkout page
+      window.location.href = data.url;
+    } else {
+      showNotification("Failed to start checkout");
+    }
+  } catch (error) {
+    console.error("Error starting checkout:", error);
+    showNotification("Failed to start checkout");
+  }
 }
 
 // close checkout
