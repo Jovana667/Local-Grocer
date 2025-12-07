@@ -64,10 +64,21 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   cartBtn.addEventListener("click", openCart);
-  searchBtn.addEventListener("click", handleSearch);
-  searchInput.addEventListener("keyup", (e) => {
-    if (e.key === "Enter") handleSearch(e);
+
+  // Search functionality - prevent form submission
+  const searchForm = searchInput.closest("form");
+  if (searchForm) {
+    searchForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      handleSearch(e);
+    });
+  }
+
+  searchBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    handleSearch(e);
   });
+
   checkoutBtn.addEventListener("click", openCheckout);
   completeOrderBtn.addEventListener("click", completeOrder);
 
@@ -305,7 +316,7 @@ async function displayProducts(productsToShow) {
 function handleSearch(e) {
   if (e) e.preventDefault();
   const searchTerm = searchInput.value.toLowerCase().trim();
-  e.preventDefault();
+
   if (!searchTerm) {
     displayProducts(allProducts);
     return;
@@ -439,7 +450,9 @@ function displayCartItems() {
     cartItem.innerHTML = `
       <div class="cart-item-info">
         <div class="cart-item-name">${item.name}</div>
-        <div class="cart-item-image"><img src="${item.imageUrl}" alt="${item.name}"></div>
+        <div class="cart-item-image"><img src="${item.imageUrl}" alt="${
+      item.name
+    }"></div>
         <div class="cart-item-controls">
           <button class="qty-btn" onclick="decrementQuantity(${
             item.id
