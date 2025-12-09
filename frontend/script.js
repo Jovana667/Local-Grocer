@@ -14,10 +14,17 @@ let authSection,
   registerBtn,
   emailInput,
   passwordInput,
-  authMessage;
+  authMessage,
+  loginPromptBtn;
 let productsGrid, cartBtn, cartCount, cartModal, checkoutModal;
 let cartItems, cartTotal, searchInput, searchBtn, checkoutBtn, completeOrderBtn;
 let ordersSection, ordersList, backToShopBtn, viewOrdersBtn;
+let loginPromptModal,
+  modalLoginBtn,
+  modalRegisterBtn,
+  checkoutEmailInput,
+  checkoutPasswordInput,
+  modalAuthMessage;
 
 // wait for DOM to load
 
@@ -31,6 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
   emailInput = document.getElementById("emailInput");
   passwordInput = document.getElementById("passwordInput");
   authMessage = document.getElementById("authMessage");
+  loginPromptBtn = document.getElementById("loginPromptBtn");
   productsGrid = document.getElementById("productsGrid");
   cartBtn = document.getElementById("cartBtn");
   cartCount = document.getElementById("cartCount");
@@ -46,14 +54,25 @@ document.addEventListener("DOMContentLoaded", function () {
   ordersList = document.getElementById("ordersList");
   backToShopBtn = document.getElementById("backToShopBtn");
   viewOrdersBtn = document.getElementById("viewOrdersBtn");
+  loginPromptModal = document.getElementById("loginPromptModal");
+  modalLoginBtn = document.getElementById("modalLoginBtn");
+  modalRegisterBtn = document.getElementById("modalRegisterBtn");
+  checkoutEmailInput = document.getElementById("checkoutEmailInput");
+  checkoutPasswordInput = document.getElementById("checkoutPasswordInput");
+  modalAuthMessage = document.getElementById("modalAuthMessage");
 
   // event listeners
   loginBtn.addEventListener("click", handleLogin);
   logoutBtn.addEventListener("click", handleLogout);
   registerBtn.addEventListener("click", handleRegister);
+  loginPromptBtn.addEventListener("click", showAuthSection);
   backToShopBtn.addEventListener("click", backToShop);
   viewOrdersBtn.addEventListener("click", viewOrders);
   checkoutBtn.addEventListener("click", openCheckout);
+
+  // Modal login/register listeners
+  modalLoginBtn.addEventListener("click", handleModalLogin);
+  modalRegisterBtn.addEventListener("click", handleModalRegister);
 
   // allow enter key to login
   emailInput.addEventListener("keyup", (e) => {
@@ -90,10 +109,24 @@ document.addEventListener("DOMContentLoaded", function () {
     btn.addEventListener("click", closeCheckout);
   });
 
+  // close login prompt modal
+  document.querySelectorAll(".close-login-prompt").forEach((btn) => {
+    btn.addEventListener("click", closeLoginPrompt);
+  });
+
   // Close modal when clicking outside
   window.addEventListener("click", (e) => {
     if (e.target === cartModal) closeCart();
     if (e.target === checkoutModal) closeCheckout();
+    if (e.target === loginPromptModal) closeLoginPrompt();
+  });
+
+  // allow enter key in modal login
+  checkoutEmailInput.addEventListener("keyup", (e) => {
+    if (e.key === "Enter") handleModalLogin();
+  });
+  checkoutPasswordInput.addEventListener("keyup", (e) => {
+    if (e.key === "Enter") handleModalLogin();
   });
 
   // load products from backend
@@ -109,14 +142,15 @@ document.addEventListener("DOMContentLoaded", function () {
       products = data;
       allProducts = [...data];
 
+      // Display products immediately for all users (guests and logged in)
+      displayProducts(products);
+
       // After products load, check if user should stay logged in
       const savedUser = localStorage.getItem("currentUser");
       if (savedUser) {
         currentUser = JSON.parse(savedUser);
-        // Show shop instead of login
-        authSection.classList.add("hidden");
-        shopSection.classList.remove("hidden");
-        displayProducts(products);
+        // Update UI to show logged-in state
+        updateAuthUI();
       }
     } catch (error) {
       console.error("Error loading products:", error);
@@ -156,14 +190,13 @@ async function handleLogin() {
 
     if (data.success) {
       currentUser = data.user;
-      localStorage.setItem("currentUser", JSON.stringify(data.user)); // ← ADD THIS //
+      localStorage.setItem("currentUser", JSON.stringify(data.user));
       showAuthMessage(data.message, "success");
+      updateAuthUI();
 
       setTimeout(() => {
         authSection.classList.add("hidden");
         shopSection.classList.remove("hidden");
-        console.log("Displaying products, allProducts:", allProducts);
-        displayProducts(products);
       }, 1000);
     } else {
       showAuthMessage(data.message, "error");
@@ -213,6 +246,7 @@ async function handleRegister() {
       localStorage.setItem("currentUser", JSON.stringify(data.user));
       console.log("User registered, currentUser:", currentUser);
       showAuthMessage(data.message, "success");
+      updateAuthUI();
 
       // new user - cart empty
       cart = [];
@@ -221,7 +255,6 @@ async function handleRegister() {
       setTimeout(() => {
         authSection.classList.add("hidden");
         shopSection.classList.remove("hidden");
-        displayProducts(allProducts);
       }, 1000);
     } else {
       showAuthMessage(data.message, "error");
@@ -243,24 +276,22 @@ function handleLogout() {
   console.log("Logout button clicked!");
 
   currentUser = null;
-  setTimeout(() => {
-    authMessage.textContent = "Logged out successfully";
-  }, 1000);
+  localStorage.removeItem("currentUser");
+
   // clear cart on logout
   cart = [];
-  products = [];
-  allProducts = [];
   updateCartCount();
+  updateAuthUI();
 
   // clear inputs
   emailInput.value = "";
   passwordInput.value = "";
 
-  setTimeout(() => {
-    ordersSection.classList.add("hidden");
-    authSection.classList.remove("hidden");
-    shopSection.classList.add("hidden");
-  }, 1000);
+  // Hide orders section if visible, stay on shop
+  ordersSection.classList.add("hidden");
+  shopSection.classList.remove("hidden");
+
+  showNotification("Logged out successfully");
 }
 
 // Display products
@@ -621,14 +652,23 @@ async function openCheckout() {
     return;
   }
 
+  // Check if user is logged in
+  if (!currentUser) {
+    loginPromptModal.classList.remove("hidden"); // Show login prompt
+    return;
+  }
+
   try {
     // Save cart and user to localStorage before redirect (so we can save order after payment)
-    localStorage.setItem('pendingOrder', JSON.stringify({
-      cart: cart,
-      userId: currentUser.id,
-      total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
-    }));
-    
+    localStorage.setItem(
+      "pendingOrder",
+      JSON.stringify({
+        cart: cart,
+        userId: currentUser.id,
+        total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
+      })
+    );
+
     // Call backend to create Stripe checkout session
     const response = await fetch(
       "http://localhost:3000/api/create-checkout-session",
@@ -824,3 +864,133 @@ opacity: 1;
 }
 }`;
 document.head.appendChild(style);
+
+// Update UI based on authentication state
+function updateAuthUI() {
+  if (currentUser) {
+    // User is logged in - show user buttons, hide login button
+    loginPromptBtn.classList.add("hidden");
+    viewOrdersBtn.classList.remove("hidden");
+    logoutBtn.classList.remove("hidden");
+  } else {
+    // User is not logged in - show login button, hide user buttons
+    loginPromptBtn.classList.remove("hidden");
+    viewOrdersBtn.classList.add("hidden");
+    logoutBtn.classList.add("hidden");
+  }
+}
+
+// Show auth section when guest clicks login button
+function showAuthSection() {
+  authSection.classList.remove("hidden");
+  shopSection.classList.add("hidden");
+}
+
+// Modal login handler
+async function handleModalLogin() {
+  const email = checkoutEmailInput.value.trim();
+  const password = checkoutPasswordInput.value.trim();
+
+  if (!email || !password) {
+    showModalAuthMessage("Please enter both email and password", "error");
+    return;
+  }
+  if (!email.includes("@")) {
+    showModalAuthMessage("Please enter a valid email address", "error");
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      currentUser = data.user;
+      localStorage.setItem("currentUser", JSON.stringify(data.user));
+      showModalAuthMessage(data.message, "success");
+      updateAuthUI();
+
+      // Close modal and proceed to checkout after short delay
+      setTimeout(() => {
+        closeLoginPrompt();
+        openCheckout();
+      }, 1000);
+    } else {
+      showModalAuthMessage(data.message, "error");
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    showModalAuthMessage("Login failed. Please try again.", "error");
+  }
+}
+
+// Modal register handler
+async function handleModalRegister() {
+  const email = checkoutEmailInput.value.trim();
+  const password = checkoutPasswordInput.value.trim();
+
+  if (!email || !password) {
+    showModalAuthMessage("Please enter both email and password", "error");
+    return;
+  }
+
+  if (!email.includes("@")) {
+    showModalAuthMessage("Please enter a valid email address", "error");
+    return;
+  }
+  if (password.length < 6) {
+    showModalAuthMessage("Password must be at least 6 characters", "error");
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      currentUser = data.user;
+      localStorage.setItem("currentUser", JSON.stringify(data.user));
+      showModalAuthMessage(data.message, "success");
+      updateAuthUI();
+
+      // Close modal and proceed to checkout after short delay
+      setTimeout(() => {
+        closeLoginPrompt();
+        openCheckout();
+      }, 1000);
+    } else {
+      showModalAuthMessage(data.message, "error");
+    }
+  } catch (error) {
+    console.error("Registration error:", error);
+    showModalAuthMessage("Registration failed. Please try again.", "error");
+  }
+}
+
+// Show message in login prompt modal
+function showModalAuthMessage(message, type) {
+  modalAuthMessage.textContent = message;
+  modalAuthMessage.style.color = type === "success" ? "green" : "red";
+}
+
+// Close login prompt modal
+function closeLoginPrompt() {
+  loginPromptModal.classList.add("hidden");
+  checkoutEmailInput.value = "";
+  checkoutPasswordInput.value = "";
+  modalAuthMessage.textContent = "";
+}
