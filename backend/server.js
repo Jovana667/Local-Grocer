@@ -7,7 +7,7 @@ const fetch = require("node-fetch");
 const cors = require("cors");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 5000;
 
 // Enable CORS
 app.use(cors());
